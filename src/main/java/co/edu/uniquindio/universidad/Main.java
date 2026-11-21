@@ -1,273 +1,194 @@
 package co.edu.uniquindio.universidad;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 public class Main {
-    private static final Scanner sc = new Scanner(System.in);
-    private static Empresa empresa;
-
     public static void main(String[] args) {
-        empresa = new Empresa("DevPlus", "901.234.567-8", "Calle 15 # 14-20, Armenia, Quindío",
-                "6067350000", "www.devplus.com");
-        cargarDatosDePrueba();
+        Scanner sc = new Scanner(System.in);
+        Empresa empresa = new Empresa("DevPlus", "901234567-8", "Calle 15 # 14-20", "6067350000", "www.devplus.com");
 
-        int opcion;
-        do {
-            mostrarMenu();
-            opcion = leerEntero("Seleccione una opción: ");
-            System.out.println();
-            switch (opcion) {
-                case 1: registrarCliente(); break;
-                case 2: registrarDesarrollador(); break;
-                case 3: registrarServicio(); break;
-                case 4: registrarProyecto(); break;
-                case 5: asignarDesarrollador(); break;
-                case 6: agregarServicio(); break;
-                case 7: confirmarProyecto(); break;
-                case 8: cambiarEstado(); break;
-                case 9: listarClientes(); break;
-                case 10: listarDesarrolladores(); break;
-                case 11: listarProyectos(); break;
-                case 12: listarServicios(); break;
-                case 13: consultarPorTelefono(); break;
-                case 14: consultarIngresos(); break;
-                case 0: System.out.println("¡Hasta pronto!"); break;
-                default: System.out.println("Opción no válida.");
-            }
-        } while (opcion != 0);
-    }
+        // ---------- Datos de prueba ----------
+        // los telefonos 496 y 8128 son numeros perfectos
+        Cliente c1 = new Cliente("Ana Torres", "1094567890", "8128", "ana@mail.com", "Colombia");
+        Cliente c2 = new Cliente("Tech Solutions", "900123456", "496", "info@tech.com", "Estados Unidos");
+        empresa.registrarCliente(c1);
+        empresa.registrarCliente(c2);
 
-    // ------------------------------- Menú -------------------------------
+        empresa.registrarDesarrollador(new Desarrollador("D001", "Backend", "Senior", 2, 400000, "Disponible"));
+        empresa.registrarDesarrollador(new Desarrollador("D002", "Frontend", "Semisenior", 3, 250000, "Disponible"));
+        empresa.registrarDesarrollador(new Desarrollador("D003", "Datos", "Junior", 1, 120000, "En capacitacion"));
 
-    private static void mostrarMenu() {
-        System.out.println("\n==================== " + empresa.getNombreComercial() + " ====================");
-        System.out.println(" 1. Registrar cliente");
-        System.out.println(" 2. Registrar desarrollador");
-        System.out.println(" 3. Registrar servicio adicional");
-        System.out.println(" 4. Registrar proyecto");
-        System.out.println(" 5. Agregar desarrollador a un proyecto");
-        System.out.println(" 6. Agregar servicio adicional a un proyecto");
-        System.out.println(" 7. Confirmar proyecto");
-        System.out.println(" 8. Cambiar estado de un proyecto");
-        System.out.println(" 9. Listar clientes");
-        System.out.println("10. Listar desarrolladores");
-        System.out.println("11. Listar proyectos");
-        System.out.println("12. Listar servicios adicionales");
-        System.out.println("13. Consultar cliente por teléfono (¿número perfecto?)");
-        System.out.println("14. Ingresos por fecha de solicitud");
-        System.out.println(" 0. Salir");
-    }
+        empresa.registrarServicio(new ServicioAdicional("S001", "Soporte tecnico", "Soporte durante el desarrollo", 500000, true));
+        empresa.registrarServicio(new ServicioAdicional("S002", "Capacitacion", "Capacitacion a usuarios", 800000, true));
+        empresa.registrarServicio(new ServicioAdicional("S003", "Despliegue en la nube", "Subir el sistema a la nube", 1200000, true));
+        empresa.registrarServicio(new ServicioAdicional("S004", "Migracion de datos", "Pasar los datos viejos", 1500000, true));
 
-    // --------------------------- Opciones del menú ---------------------------
-
-    private static void registrarCliente() {
-        String nombre = leerTexto("Nombre completo o razón social: ");
-        String doc = leerTexto("Documento de identidad o NIT: ");
-        String tel = leerTexto("Teléfono: ");
-        String correo = leerTexto("Correo electrónico: ");
-        String pais = leerTexto("País de procedencia: ");
-        boolean ok = empresa.registrarCliente(new Cliente(nombre, doc, tel, correo, pais));
-        System.out.println(ok ? "Cliente registrado." : "Ya existe un cliente con ese documento.");
-    }
-
-    private static void registrarDesarrollador() {
-        String codigo = leerTexto("Código del desarrollador: ");
-        String equipo = leerTexto("Equipo de trabajo: ");
-        System.out.println("Nivel: 1. Junior  2. Semisenior  3. Senior");
-        int n = leerEnteroEnRango("Opción: ", 1, 3);
-        NivelDesarrollador nivel = NivelDesarrollador.values()[n - 1];
-        int max = leerEnteroEnRango("Máximo de proyectos simultáneos: ", 1, 50);
-        double tarifa = leerDouble("Tarifa por día: ");
-        boolean ok = empresa.registrarDesarrollador(
-                new Desarrollador(codigo, equipo, nivel, max, tarifa, EstadoDesarrollador.DISPONIBLE));
-        System.out.println(ok ? "Desarrollador registrado." : "Ya existe un desarrollador con ese código.");
-    }
-
-    private static void registrarServicio() {
-        String codigo = leerTexto("Código del servicio: ");
-        String nombre = leerTexto("Nombre: ");
-        String desc = leerTexto("Descripción: ");
-        double precio = leerDouble("Precio: ");
-        boolean ok = empresa.registrarServicio(new ServicioAdicional(codigo, nombre, desc, precio, true));
-        System.out.println(ok ? "Servicio registrado." : "Ya existe un servicio con ese código.");
-    }
-
-    private static void registrarProyecto() {
-        String docCliente = leerTexto("Documento/NIT del cliente: ");
-        Cliente cliente = empresa.buscarClientePorDocumento(docCliente);
-        if (cliente == null) {
-            System.out.println("El cliente no está registrado.");
-            return;
-        }
-        String codigo = leerTexto("Código del proyecto: ");
-        LocalDate solicitud = leerFecha("Fecha de solicitud (aaaa-mm-dd): ");
-        LocalDate inicio = leerFecha("Fecha de inicio (aaaa-mm-dd): ");
-        LocalDate entrega = leerFecha("Fecha de entrega (aaaa-mm-dd): ");
-        System.out.println("Método de pago: 1. Tarjeta de crédito  2. Transferencia bancaria  3. Efectivo");
-        int m = leerEnteroEnRango("Opción: ", 1, 3);
-        try {
-            Proyecto p = new Proyecto(codigo, solicitud, inicio, entrega, MetodoPago.values()[m - 1], cliente);
-            System.out.println(empresa.registrarProyecto(p)
-                    ? "Proyecto registrado en estado Pendiente."
-                    : "Ya existe un proyecto con ese código.");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private static void asignarDesarrollador() {
-        String proyecto = leerTexto("Código del proyecto: ");
-        String dev = leerTexto("Código del desarrollador: ");
-        System.out.println(empresa.asignarDesarrollador(proyecto, dev));
-    }
-
-    private static void agregarServicio() {
-        String proyecto = leerTexto("Código del proyecto: ");
-        String servicio = leerTexto("Código del servicio: ");
-        System.out.println(empresa.agregarServicioAProyecto(proyecto, servicio));
-    }
-
-    private static void confirmarProyecto() {
-        String proyecto = leerTexto("Código del proyecto a confirmar: ");
-        System.out.println(empresa.confirmarProyecto(proyecto));
-    }
-
-    private static void cambiarEstado() {
-        String proyecto = leerTexto("Código del proyecto: ");
-        System.out.println("Nuevo estado: 1. Pendiente  2. Confirmado  3. En curso  4. Finalizado  5. Cancelado");
-        int e = leerEnteroEnRango("Opción: ", 1, 5);
-        System.out.println(empresa.cambiarEstadoProyecto(proyecto, EstadoProyecto.values()[e - 1]));
-    }
-
-    private static void listarClientes() {
-        if (empresa.getClientes().isEmpty()) {
-            System.out.println("No hay clientes registrados.");
-        }
-        for (Cliente c : empresa.getClientes()) {
-            System.out.println(c);
-        }
-    }
-
-    private static void listarDesarrolladores() {
-        if (empresa.getDesarrolladores().isEmpty()) {
-            System.out.println("No hay desarrolladores registrados.");
-        }
-        for (Desarrollador d : empresa.getDesarrolladores()) {
-            System.out.println(d);
-        }
-    }
-
-    private static void listarProyectos() {
-        if (empresa.getProyectos().isEmpty()) {
-            System.out.println("No hay proyectos registrados.");
-        }
-        for (Proyecto p : empresa.getProyectos()) {
-            System.out.println(p);
-            System.out.println();
-        }
-    }
-
-    private static void listarServicios() {
-        if (empresa.getServicios().isEmpty()) {
-            System.out.println("No hay servicios registrados.");
-        }
-        for (ServicioAdicional s : empresa.getServicios()) {
-            System.out.println(s);
-        }
-    }
-
-    private static void consultarPorTelefono() {
-        String tel = leerTexto("Teléfono del cliente: ");
-        System.out.println(empresa.consultarClientePorTelefono(tel));
-    }
-
-    private static void consultarIngresos() {
-        LocalDate fecha = leerFecha("Fecha de solicitud a consultar (aaaa-mm-dd): ");
-        double total = empresa.calcularIngresosPorFecha(fecha);
-        System.out.printf("Ingresos de los proyectos solicitados el %s: $%,.0f%n", fecha, total);
-    }
-
-    // ---------------------------- Datos de prueba ----------------------------
-
-    private static void cargarDatosDePrueba() {
-        // Teléfonos 8128 y 496 son números perfectos (para probar la consulta)
-        Cliente ana = new Cliente("Ana Torres", "1094567890", "8128", "ana@mail.com", "Colombia");
-        Cliente tech = new Cliente("Tech Solutions Inc.", "900123456", "496", "info@techsol.com", "Estados Unidos");
-        Cliente carlos = new Cliente("Carlos Gómez", "79876543", "3001234567", "carlos@mail.com", "Colombia");
-        empresa.registrarCliente(ana);
-        empresa.registrarCliente(tech);
-        empresa.registrarCliente(carlos);
-
-        empresa.registrarDesarrollador(new Desarrollador("D001", "Backend", NivelDesarrollador.SENIOR, 2, 400000, EstadoDesarrollador.DISPONIBLE));
-        empresa.registrarDesarrollador(new Desarrollador("D002", "Frontend", NivelDesarrollador.SEMISENIOR, 3, 250000, EstadoDesarrollador.DISPONIBLE));
-        empresa.registrarDesarrollador(new Desarrollador("D003", "Datos", NivelDesarrollador.JUNIOR, 1, 120000, EstadoDesarrollador.DISPONIBLE));
-        empresa.registrarDesarrollador(new Desarrollador("D004", "Móvil", NivelDesarrollador.JUNIOR, 1, 110000, EstadoDesarrollador.EN_CAPACITACION));
-
-        empresa.registrarServicio(new ServicioAdicional("S001", "Soporte técnico", "Soporte durante el desarrollo", 500000, true));
-        empresa.registrarServicio(new ServicioAdicional("S002", "Capacitación de usuarios", "Formación al personal del cliente", 800000, true));
-        empresa.registrarServicio(new ServicioAdicional("S003", "Despliegue en la nube", "Publicación en servidores cloud", 1200000, true));
-        empresa.registrarServicio(new ServicioAdicional("S004", "Migración de datos", "Traslado de datos legados", 1500000, true));
-
-        Proyecto p1 = new Proyecto("P001", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 10, 1),
-                LocalDate.of(2026, 10, 10), MetodoPago.TRANSFERENCIA_BANCARIA, ana);
-        Proyecto p2 = new Proyecto("P002", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 10, 5),
-                LocalDate.of(2026, 10, 20), MetodoPago.TARJETA_CREDITO, tech);
+        Proyecto p1 = new Proyecto("P001", "2026-09-01", "2026-10-01", "2026-10-10", "Efectivo", 10, c1);
         empresa.registrarProyecto(p1);
-        empresa.registrarProyecto(p2);
-        empresa.asignarDesarrollador("P001", "D001");
-        empresa.asignarDesarrollador("P001", "D002");
-        empresa.agregarServicioAProyecto("P001", "S001");
-        empresa.asignarDesarrollador("P002", "D002");
-        empresa.agregarServicioAProyecto("P002", "S003");
-        empresa.confirmarProyecto("P001");
-    }
+        p1.agregarDesarrollador(empresa.buscarDesarrollador("D001"));
+        p1.agregarServicio(empresa.buscarServicio("S001"));
 
-    // -------------------------- Utilidades de lectura --------------------------
+        // ---------- Menu ----------
+        int opcion = -1;
+        while (opcion != 0) {
+            System.out.println();
+            System.out.println("===== DEVPLUS =====");
+            System.out.println("1. Registrar cliente");
+            System.out.println("2. Registrar desarrollador");
+            System.out.println("3. Registrar servicio adicional");
+            System.out.println("4. Registrar proyecto");
+            System.out.println("5. Agregar desarrollador a proyecto");
+            System.out.println("6. Agregar servicio a proyecto");
+            System.out.println("7. Confirmar proyecto");
+            System.out.println("8. Listar clientes");
+            System.out.println("9. Listar desarrolladores");
+            System.out.println("10. Listar proyectos");
+            System.out.println("11. Consultar cliente por telefono (numero perfecto)");
+            System.out.println("12. Ingresos por fecha de solicitud");
+            System.out.println("0. Salir");
+            System.out.print("Opcion: ");
+            opcion = Integer.parseInt(sc.nextLine());
 
-    private static String leerTexto(String mensaje) {
-        System.out.print(mensaje);
-        return sc.nextLine().trim();
-    }
+            if (opcion == 1) {
+                System.out.print("Nombre completo o razon social: ");
+                String nombre = sc.nextLine();
+                System.out.print("Documento o NIT: ");
+                String doc = sc.nextLine();
+                System.out.print("Telefono: ");
+                String tel = sc.nextLine();
+                System.out.print("Correo: ");
+                String correo = sc.nextLine();
+                System.out.print("Pais: ");
+                String pais = sc.nextLine();
+                empresa.registrarCliente(new Cliente(nombre, doc, tel, correo, pais));
+                System.out.println("Cliente registrado");
 
-    private static int leerEntero(String mensaje) {
-        while (true) {
-            try {
-                return Integer.parseInt(leerTexto(mensaje));
-            } catch (NumberFormatException e) {
-                System.out.println("Ingrese un número entero válido.");
+            } else if (opcion == 2) {
+                System.out.print("Codigo: ");
+                String codigo = sc.nextLine();
+                System.out.print("Equipo de trabajo: ");
+                String equipo = sc.nextLine();
+                System.out.print("Nivel (Junior, Semisenior, Senior): ");
+                String nivel = sc.nextLine();
+                System.out.print("Maximo de proyectos simultaneos: ");
+                int max = Integer.parseInt(sc.nextLine());
+                System.out.print("Tarifa por dia: ");
+                double tarifa = Double.parseDouble(sc.nextLine());
+                empresa.registrarDesarrollador(new Desarrollador(codigo, equipo, nivel, max, tarifa, "Disponible"));
+                System.out.println("Desarrollador registrado");
+
+            } else if (opcion == 3) {
+                System.out.print("Codigo: ");
+                String codigo = sc.nextLine();
+                System.out.print("Nombre: ");
+                String nombre = sc.nextLine();
+                System.out.print("Descripcion: ");
+                String desc = sc.nextLine();
+                System.out.print("Precio: ");
+                double precio = Double.parseDouble(sc.nextLine());
+                empresa.registrarServicio(new ServicioAdicional(codigo, nombre, desc, precio, true));
+                System.out.println("Servicio registrado");
+
+            } else if (opcion == 4) {
+                System.out.print("Documento del cliente: ");
+                Cliente cliente = empresa.buscarClientePorDocumento(sc.nextLine());
+                if (cliente == null) {
+                    System.out.println("Cliente no encontrado");
+                } else {
+                    System.out.print("Codigo del proyecto: ");
+                    String codigo = sc.nextLine();
+                    System.out.print("Fecha de solicitud (aaaa-mm-dd): ");
+                    String solicitud = sc.nextLine();
+                    System.out.print("Fecha de inicio (aaaa-mm-dd): ");
+                    String inicio = sc.nextLine();
+                    System.out.print("Fecha de entrega (aaaa-mm-dd): ");
+                    String entrega = sc.nextLine();
+                    System.out.print("Metodo de pago (Tarjeta de credito, Transferencia bancaria, Efectivo): ");
+                    String pago = sc.nextLine();
+                    System.out.print("Dias de desarrollo: ");
+                    int dias = Integer.parseInt(sc.nextLine());
+                    empresa.registrarProyecto(new Proyecto(codigo, solicitud, inicio, entrega, pago, dias, cliente));
+                    System.out.println("Proyecto registrado (Pendiente)");
+                }
+
+            } else if (opcion == 5) {
+                System.out.print("Codigo del proyecto: ");
+                Proyecto p = empresa.buscarProyecto(sc.nextLine());
+                System.out.print("Codigo del desarrollador: ");
+                Desarrollador d = empresa.buscarDesarrollador(sc.nextLine());
+                if (p == null || d == null) {
+                    System.out.println("Proyecto o desarrollador no encontrado");
+                } else if (p.agregarDesarrollador(d)) {
+                    System.out.println("Desarrollador agregado. Valor total: $" + p.getValorTotal());
+                } else {
+                    System.out.println("El desarrollador no esta disponible");
+                }
+
+            } else if (opcion == 6) {
+                System.out.print("Codigo del proyecto: ");
+                Proyecto p = empresa.buscarProyecto(sc.nextLine());
+                System.out.print("Codigo del servicio: ");
+                ServicioAdicional s = empresa.buscarServicio(sc.nextLine());
+                if (p == null || s == null) {
+                    System.out.println("Proyecto o servicio no encontrado");
+                } else if (p.agregarServicio(s)) {
+                    System.out.println("Servicio agregado. Valor total: $" + p.getValorTotal());
+                } else {
+                    System.out.println("No se pudo agregar el servicio");
+                }
+
+            } else if (opcion == 7) {
+                System.out.print("Codigo del proyecto: ");
+                Proyecto p = empresa.buscarProyecto(sc.nextLine());
+                if (p == null) {
+                    System.out.println("Proyecto no encontrado");
+                } else if (p.confirmar()) {
+                    System.out.println("Proyecto confirmado, desarrolladores actualizados");
+                } else {
+                    System.out.println("No se pudo confirmar (debe estar Pendiente y tener desarrolladores)");
+                }
+
+            } else if (opcion == 8) {
+                for (int i = 0; i < empresa.getClientes().size(); i++) {
+                    System.out.println(empresa.getClientes().get(i));
+                }
+
+            } else if (opcion == 9) {
+                for (int i = 0; i < empresa.getDesarrolladores().size(); i++) {
+                    System.out.println(empresa.getDesarrolladores().get(i));
+                }
+
+            } else if (opcion == 10) {
+                for (int i = 0; i < empresa.getProyectos().size(); i++) {
+                    System.out.println(empresa.getProyectos().get(i));
+                }
+
+            } else if (opcion == 11) {
+                System.out.print("Telefono del cliente: ");
+                String tel = sc.nextLine();
+                Cliente c = empresa.consultarClientePorTelefono(tel);
+                if (c == null) {
+                    System.out.println("No hay cliente con ese telefono");
+                } else {
+                    System.out.println(c);
+                    if (empresa.esNumeroPerfecto(Long.parseLong(tel))) {
+                        System.out.println("El telefono " + tel + " SI es un numero perfecto");
+                    } else {
+                        System.out.println("El telefono " + tel + " NO es un numero perfecto");
+                    }
+                }
+
+            } else if (opcion == 12) {
+                System.out.print("Fecha de solicitud (aaaa-mm-dd): ");
+                String fecha = sc.nextLine();
+                System.out.println("Ingresos de esa fecha: $" + empresa.calcularIngresosPorFecha(fecha));
+
+            } else if (opcion == 0) {
+                System.out.println("Chao!");
+            } else {
+                System.out.println("Opcion invalida");
             }
         }
-    }
-
-    private static int leerEnteroEnRango(String mensaje, int min, int max) {
-        while (true) {
-            int n = leerEntero(mensaje);
-            if (n >= min && n <= max) {
-                return n;
-            }
-            System.out.println("Debe estar entre " + min + " y " + max + ".");
-        }
-    }
-
-    private static double leerDouble(String mensaje) {
-        while (true) {
-            try {
-                return Double.parseDouble(leerTexto(mensaje));
-            } catch (NumberFormatException e) {
-                System.out.println("Ingrese un número válido.");
-            }
-        }
-    }
-
-    private static LocalDate leerFecha(String mensaje) {
-        while (true) {
-            try {
-                return LocalDate.parse(leerTexto(mensaje));
-            } catch (DateTimeParseException e) {
-                System.out.println("Formato de fecha inválido. Use aaaa-mm-dd.");
-            }
-        }
+        sc.close();
     }
 }
