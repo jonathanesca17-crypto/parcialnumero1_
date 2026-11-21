@@ -1,5 +1,4 @@
 package co.edu.uniquindio.universidad;
-
 import java.util.Scanner;
 
 public class Main {
